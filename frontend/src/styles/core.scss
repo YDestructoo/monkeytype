@@ -424,3 +424,209 @@ table {
     background-color: var(--sub-alt-color);
   }
 }
+
+// PvP countdown overlay and match styling
+.pagePvp {
+  .matchSection {
+    position: relative;
+  }
+
+  .countdownOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+
+    .countdownNumber {
+      font-size: 8rem;
+      font-weight: bold;
+      color: var(--main-color);
+      animation: countdownPulse 1s ease-in-out infinite;
+    }
+  }
+
+  .matchStats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 0 auto 2rem;
+    padding: 0.75rem 1rem;
+    background: var(--sub-alt-color);
+    border-radius: var(--roundness);
+    max-width: 600px;
+
+    .playerCard {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      .playerInfo {
+        .playerName {
+          font-size: 0.875rem;
+          color: var(--sub-color);
+          font-weight: 500;
+          margin-bottom: 0.25rem;
+        }
+      }
+
+      .stats {
+        display: flex;
+        gap: 1rem;
+
+        .stat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+
+          .value {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--text-color);
+          }
+
+          .label {
+            font-size: 0.625rem;
+            color: var(--sub-color);
+            text-transform: lowercase;
+          }
+        }
+      }
+
+      &.you .stats .stat .value {
+        color: var(--main-color);
+      }
+    }
+
+    .vsSection {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.125rem;
+      padding: 0 0.75rem;
+
+      .vsText {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: var(--sub-color);
+      }
+
+      .opponentName {
+        font-size: 0.75rem;
+        color: var(--text-color);
+      }
+    }
+  }
+
+  .testArea {
+    margin-top: 2rem;
+  }
+
+  .pvpTestArea {
+    margin: 2rem auto;
+    max-width: 900px;
+    position: relative;
+    cursor: text;
+
+    .pvpWordsWrapper {
+      position: relative;
+      font-size: 1.5rem;
+      line-height: 2.5;
+      overflow: hidden;
+      min-height: 8rem;
+
+      #pvpWordsInput {
+        position: absolute;
+        opacity: 0;
+        padding: 0;
+        border: none;
+        outline: none;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        cursor: text;
+      }
+
+      .pvpWords {
+        color: var(--sub-color);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5em;
+        user-select: none;
+        transition: margin-top 0.15s;
+
+        .word {
+          display: inline-flex;
+
+          letter {
+            display: inline;
+            transition: color 0.1s;
+
+            &.correct {
+              color: var(--text-color);
+            }
+
+            &.incorrect {
+              color: var(--error-color);
+            }
+
+            &.extra {
+              color: var(--error-extra-color, var(--error-color));
+              opacity: 0.7;
+            }
+          }
+
+          &.active letter {
+            border-bottom: 2px solid var(--sub-alt-color, transparent);
+          }
+
+          &.error {
+            text-decoration: line-through;
+            text-decoration-color: var(--error-color);
+          }
+        }
+      }
+
+      .pvpCaret {
+        position: absolute;
+        width: 2px;
+        height: 1.8em;
+        background: var(--caret-color, var(--main-color));
+        animation: caretBlink 1s infinite;
+        transition:
+          left 0.05s,
+          top 0.05s;
+        pointer-events: none;
+        z-index: 2;
+      }
+    }
+  }
+
+  @keyframes caretBlink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+}
+
+@keyframes countdownPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}

@@ -42,6 +42,10 @@
             <i class="fas fa-times"></i>
             Leave Queue
           </button>
+          <button class="button testMatch" data-action="testMatch">
+            <i class="fas fa-bug"></i>
+            Test Match (Dev)
+          </button>
           <div class="queueInfo hidden">
             <div class="queueSize">
               <i class="fas fa-users"></i>
@@ -61,68 +65,79 @@
 
     <!-- Match Section -->
     <div class="matchSection hidden">
-      <div class="bigtitle">
-        <div class="text">Live Match</div>
-        <div class="subtext">
-          <div class="text">
-            <span>vs</span>
-            <span class="opponentName">-</span>
-          </div>
-        </div>
+      <!-- Countdown Overlay -->
+      <div class="countdownOverlay hidden">
+        <div class="countdownNumber">5</div>
       </div>
-      <div class="divider"></div>
 
-      <div class="matchContent">
-        <div class="playerStats you">
-          <div class="playerName">You</div>
+      <div class="matchStats">
+        <div class="playerCard you">
+          <div class="playerInfo">
+            <div class="playerName">You</div>
+          </div>
           <div class="stats">
             <div class="stat">
-              <div class="label">WPM</div>
               <div class="value" data-stat="wpm">0</div>
+              <div class="label">wpm</div>
             </div>
             <div class="stat">
-              <div class="label">Accuracy</div>
               <div class="value" data-stat="accuracy">0%</div>
+              <div class="label">acc</div>
             </div>
             <div class="stat">
-              <div class="label">Progress</div>
               <div class="value" data-stat="progress">0%</div>
+              <div class="label">progress</div>
             </div>
           </div>
         </div>
 
-        <div class="vsIndicator">
-          <div class="vs">VS</div>
-          <div class="timer">
-            <i class="fas fa-clock"></i>
-            <span data-value="timer">0:00</span>
-          </div>
+        <div class="vsSection">
+          <div class="vsText">VS</div>
+          <div class="opponentName">-</div>
         </div>
 
-        <div class="playerStats opponent">
-          <div class="playerName opponentName">Opponent</div>
+        <div class="playerCard opponent">
+          <div class="playerInfo">
+            <div class="playerName opponentName">Opponent</div>
+          </div>
           <div class="stats">
             <div class="stat">
-              <div class="label">WPM</div>
               <div class="value" data-stat="wpm">0</div>
+              <div class="label">wpm</div>
             </div>
             <div class="stat">
-              <div class="label">Accuracy</div>
               <div class="value" data-stat="accuracy">0%</div>
+              <div class="label">acc</div>
             </div>
             <div class="stat">
-              <div class="label">Progress</div>
               <div class="value" data-stat="progress">0%</div>
+              <div class="label">progress</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="testArea">
-        <!-- Test UI will be injected here -->
+      <div class="pvpTestArea">
+        <div class="pvpWordsWrapper">
+          <input
+            type="text"
+            id="pvpWordsInput"
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            data-gramm="false"
+            spellcheck="false"
+          />
+          <div class="pvpWords"></div>
+          <div class="pvpCaret"></div>
+        </div>
       </div>
 
       <div class="matchActions">
+        <button class="button startTest" data-action="startTest">
+          <i class="fas fa-play"></i>
+          Start Test (Dev)
+        </button>
         <button class="button forfeit" data-action="forfeit">
           <i class="fas fa-flag"></i>
           Forfeit Match

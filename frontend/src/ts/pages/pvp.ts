@@ -7,7 +7,154 @@ import { getAuthenticatedUser, isAuthenticated } from "../firebase";
 import Ape from "../ape";
 import * as PvPSocket from "../utils/pvp-socket";
 
+// Sample word list for PvP
+const WORD_LIST = [
+  "the",
+  "be",
+  "to",
+  "of",
+  "and",
+  "a",
+  "in",
+  "that",
+  "have",
+  "I",
+  "it",
+  "for",
+  "not",
+  "on",
+  "with",
+  "he",
+  "as",
+  "you",
+  "do",
+  "at",
+  "this",
+  "but",
+  "his",
+  "by",
+  "from",
+  "they",
+  "we",
+  "say",
+  "her",
+  "she",
+  "or",
+  "an",
+  "will",
+  "my",
+  "one",
+  "all",
+  "would",
+  "there",
+  "their",
+  "what",
+  "so",
+  "up",
+  "out",
+  "if",
+  "about",
+  "who",
+  "get",
+  "which",
+  "go",
+  "me",
+  "when",
+  "make",
+  "can",
+  "like",
+  "time",
+  "no",
+  "just",
+  "him",
+  "know",
+  "take",
+  "people",
+  "into",
+  "year",
+  "your",
+  "good",
+  "some",
+  "could",
+  "them",
+  "see",
+  "other",
+  "than",
+  "then",
+  "now",
+  "look",
+  "only",
+  "come",
+  "its",
+  "over",
+  "think",
+  "also",
+  "back",
+  "after",
+  "use",
+  "two",
+  "how",
+  "our",
+  "work",
+  "first",
+  "well",
+  "way",
+  "even",
+  "new",
+  "want",
+  "because",
+  "any",
+  "these",
+  "give",
+  "day",
+  "most",
+  "us",
+  "very",
+  "small",
+  "run",
+  "tell",
+  "few",
+  "those",
+  "follow",
+  "begin",
+  "since",
+  "would",
+  "possible",
+  "against",
+  "through",
+  "home",
+  "stand",
+  "take",
+  "change",
+  "much",
+  "early",
+  "ask",
+];
+
 type ViewState = "queue" | "match" | "result";
+
+// PvP Test State
+type PvPTestState = {
+  words: string[];
+  currentWordIndex: number;
+  currentInput: string;
+  correctChars: number;
+  totalChars: number;
+  errors: number;
+  startTime: number | null;
+  isActive: boolean;
+};
+
+const pvpTest: PvPTestState = {
+  words: [],
+  currentWordIndex: 0,
+  currentInput: "",
+  correctChars: 0,
+  totalChars: 0,
+  errors: 0,
+  startTime: null,
+  isActive: false,
+};
 
 type State = {
   view: ViewState;
@@ -15,6 +162,7 @@ type State = {
   inQueue: boolean;
   matchId: string | null;
   opponentName: string | null;
+  countdown: number | null;
   ranking: {
     elo: number;
     wins: number;
@@ -46,6 +194,7 @@ const state: State = {
   inQueue: false,
   matchId: null,
   opponentName: null,
+  countdown: null,
   ranking: null,
   matchStats: null,
   result: null,
@@ -226,13 +375,429 @@ function handleMatchFound(data: { opponent: string; matchId: string }): void {
   // Switch to match view
   switchView("match");
   updateMatchDisplay();
+
+  // DEV: Auto-start game after short delay (remove in production)
+  setTimeout(() => {
+    console.log("DEV: Auto-starting game");
+    handleGameStart();
+  }, 1000);
 }
 
 function handleGameStart(): void {
-  Notifications.add("Match started! Type as fast as you can!", 1, {
-    duration: 2,
+  console.log("Match starting - beginning countdown");
+
+  // Show countdown overlay
+  const countdownOverlay = qs(".pagePvp .countdownOverlay");
+  const countdownNumber = qs(".pagePvp .countdownNumber");
+
+  if (countdownOverlay) {
+    countdownOverlay.removeClass("hidden");
+  }
+
+  // Start countdown from 5
+  state.countdown = 5;
+
+  const countdownInterval = setInterval(() => {
+    if (state.countdown === null || state.countdown <= 0) {
+      clearInterval(countdownInterval);
+
+      // Hide countdown overlay
+      if (countdownOverlay) {
+        countdownOverlay.addClass("hidden");
+      }
+
+      // Show GO! message
+      Notifications.add("GO! Type as fast as you can!", 1, { duration: 2 });
+
+      // Initialize test - typing is now enabled
+      console.log("Countdown finished - initializing test");
+      void initializePvPTest();
+
+      return;
+    }
+
+    // Update countdown display
+    if (countdownNumber) {
+      if (state.countdown === 1) {
+        countdownNumber.setText("GO!");
+      } else {
+        countdownNumber.setText(state.countdown.toString());
+      }
+    }
+
+    console.log(`Countdown: ${state.countdown}`);
+    state.countdown--;
+  }, 1000);
+}
+
+async function initializePvPTest(): Promise<void> {
+  try {
+    console.log("Initializing PvP test...");
+
+    // Reset test state
+    pvpTest.words = generateWords(50);
+    pvpTest.currentWordIndex = 0;
+    pvpTest.currentInput = "";
+    pvpTest.correctChars = 0;
+    pvpTest.totalChars = 0;
+    pvpTest.errors = 0;
+    pvpTest.startTime = null;
+    pvpTest.isActive = true;
+
+    console.log("Generated words:", pvpTest.words.slice(0, 10));
+
+    // Get elements
+    const wordsContainer = document.querySelector(".pagePvp .pvpWords");
+    const input = document.querySelector<HTMLInputElement>(
+      ".pagePvp #pvpWordsInput",
+    );
+    const caret = document.querySelector<HTMLElement>(".pagePvp .pvpCaret");
+
+    console.log("Elements found:", {
+      wordsContainer: !!wordsContainer,
+      input: !!input,
+      caret: !!caret,
+    });
+
+    if (!wordsContainer || !input) {
+      console.error("Required elements not found!");
+      Notifications.add("Failed to initialize test area", -1);
+      return;
+    }
+
+    // Render words
+    renderWords();
+
+    // Setup input handler
+    input.value = "";
+
+    // Remove old listeners first
+    input.removeEventListener("input", handlePvPInput);
+    input.removeEventListener("keydown", handlePvPKeydown);
+
+    // Add new listeners
+    input.addEventListener("input", handlePvPInput);
+    input.addEventListener("keydown", handlePvPKeydown);
+
+    // Focus input after a small delay to ensure DOM is ready
+    setTimeout(() => {
+      input.focus();
+      console.log("Input focused, active element:", document.activeElement?.id);
+    }, 100);
+
+    // Update caret position
+    updateCaret();
+
+    console.log(
+      "PvP test initialized successfully, words rendered:",
+      pvpTest.words.length,
+    );
+
+    // Add click to focus on test area
+    const testArea = document.querySelector<HTMLElement>(
+      ".pagePvp .pvpTestArea",
+    );
+    if (testArea) {
+      testArea.addEventListener("click", () => {
+        const inp = document.querySelector<HTMLInputElement>(
+          ".pagePvp #pvpWordsInput",
+        );
+        inp?.focus();
+      });
+    }
+  } catch (error) {
+    console.error("Failed to initialize PvP test:", error);
+    Notifications.add("Failed to start typing test", -1);
+  }
+}
+
+function generateWords(count: number): string[] {
+  const words: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const randomIndex = Math.floor(Math.random() * WORD_LIST.length);
+    words.push(WORD_LIST[randomIndex] as string);
+  }
+  return words;
+}
+
+function renderWords(): void {
+  const wordsContainer = document.querySelector(".pagePvp .pvpWords");
+  if (!wordsContainer) {
+    console.error("Words container not found");
+    return;
+  }
+
+  let html = "";
+
+  pvpTest.words.forEach((word, wordIndex) => {
+    const activeClass = wordIndex === pvpTest.currentWordIndex ? " active" : "";
+    html += `<div class="word${activeClass}" data-wordindex="${wordIndex}">`;
+
+    for (const char of word) {
+      html += `<letter>${char}</letter>`;
+    }
+
+    html += "</div>";
   });
-  // Initialize test UI here
+
+  wordsContainer.innerHTML = html;
+  console.log("Words rendered, HTML length:", html.length);
+}
+
+function handlePvPInput(e: Event): void {
+  if (!pvpTest.isActive) {
+    return;
+  }
+
+  const input = e.target as HTMLInputElement;
+  const inputValue = input.value;
+
+  // Start timer on first input
+  if (pvpTest.startTime === null && inputValue.length > 0) {
+    pvpTest.startTime = Date.now();
+  }
+
+  pvpTest.currentInput = inputValue;
+  updateWordDisplay();
+  updateCaret();
+  updateStats();
+}
+
+function handlePvPKeydown(e: KeyboardEvent): void {
+  if (!pvpTest.isActive) {
+    return;
+  }
+
+  if (e.key === " " || e.code === "Space") {
+    e.preventDefault();
+
+    const currentWord = pvpTest.words[pvpTest.currentWordIndex];
+    if (!currentWord) {
+      return;
+    }
+
+    // Count correct characters in this word
+    let correctInWord = 0;
+    const minLen = Math.min(pvpTest.currentInput.length, currentWord.length);
+    for (let i = 0; i < minLen; i++) {
+      if (pvpTest.currentInput[i] === currentWord[i]) {
+        correctInWord++;
+      }
+    }
+
+    // Only count as fully correct if exact match
+    if (pvpTest.currentInput === currentWord) {
+      pvpTest.correctChars += currentWord.length + 1; // +1 for space
+    } else {
+      // Partial credit for correct characters
+      pvpTest.correctChars += correctInWord;
+    }
+    pvpTest.totalChars +=
+      Math.max(pvpTest.currentInput.length, currentWord.length) + 1;
+
+    // Mark current word as complete (add error class if incorrect)
+    const activeWord = document.querySelector(
+      ".pagePvp .pvpWords .word.active",
+    );
+    if (activeWord && pvpTest.currentInput !== currentWord) {
+      activeWord.classList.add("error");
+    }
+    activeWord?.classList.remove("active");
+
+    // Move to next word
+    pvpTest.currentWordIndex++;
+    pvpTest.currentInput = "";
+
+    const input = e.target as HTMLInputElement;
+    input.value = "";
+
+    // Check if test is complete
+    if (pvpTest.currentWordIndex >= pvpTest.words.length) {
+      finishPvPTest();
+      return;
+    }
+
+    // Mark next word as active
+    const nextWord = document.querySelector(
+      `.pagePvp .pvpWords .word[data-wordindex="${pvpTest.currentWordIndex}"]`,
+    );
+    nextWord?.classList.add("active");
+
+    // Scroll words if needed
+    scrollWords();
+
+    updateCaret();
+    updateStats();
+  }
+}
+
+function scrollWords(): void {
+  const wordsWrapper = document.querySelector<HTMLElement>(
+    ".pagePvp .pvpWordsWrapper",
+  );
+  const activeWord = document.querySelector<HTMLElement>(
+    ".pagePvp .pvpWords .word.active",
+  );
+
+  if (!wordsWrapper || !activeWord) {
+    return;
+  }
+
+  const wrapperRect = wordsWrapper.getBoundingClientRect();
+  const wordRect = activeWord.getBoundingClientRect();
+
+  // If word is below the visible area, scroll
+  if (wordRect.top > wrapperRect.top + wrapperRect.height * 0.5) {
+    const pvpWords = document.querySelector<HTMLElement>(".pagePvp .pvpWords");
+    if (pvpWords) {
+      const currentMargin = parseInt(pvpWords.style.marginTop || "0", 10);
+      const lineHeight = wordRect.height + 8; // approximate line height
+      pvpWords.style.marginTop = `${currentMargin - lineHeight}px`;
+    }
+  }
+}
+
+function updateWordDisplay(): void {
+  const activeWord = document.querySelector(".pagePvp .pvpWords .word.active");
+  if (!activeWord) {
+    console.warn("Active word not found");
+    return;
+  }
+
+  const currentWord = pvpTest.words[pvpTest.currentWordIndex];
+  if (!currentWord) {
+    return;
+  }
+
+  // Rebuild the word HTML with correct/incorrect classes
+  let html = "";
+  const input = pvpTest.currentInput;
+  const chars = currentWord.split("");
+
+  for (let i = 0; i < chars.length; i++) {
+    let className = "";
+    if (i < input.length) {
+      className = input[i] === chars[i] ? "correct" : "incorrect";
+    }
+    html += `<letter${className ? ` class="${className}"` : ""}>${chars[i]}</letter>`;
+  }
+
+  // Add extra characters
+  if (input.length > currentWord.length) {
+    for (let i = currentWord.length; i < input.length; i++) {
+      html += `<letter class="incorrect extra">${input[i]}</letter>`;
+    }
+  }
+
+  activeWord.innerHTML = html;
+}
+
+function updateCaret(): void {
+  const caret = document.querySelector<HTMLElement>(".pagePvp .pvpCaret");
+  const wordsWrapper = document.querySelector<HTMLElement>(
+    ".pagePvp .pvpWordsWrapper",
+  );
+  const activeWord = document.querySelector(".pagePvp .pvpWords .word.active");
+
+  if (!caret || !wordsWrapper || !activeWord) {
+    console.warn("Caret elements not found:", {
+      caret: !!caret,
+      wordsWrapper: !!wordsWrapper,
+      activeWord: !!activeWord,
+    });
+    return;
+  }
+
+  const letters = activeWord.querySelectorAll("letter");
+  const inputLen = pvpTest.currentInput.length;
+  const wrapperRect = wordsWrapper.getBoundingClientRect();
+
+  let targetRect: DOMRect | null = null;
+  let useRightEdge = false;
+
+  const firstLetter = letters[0];
+  if (inputLen === 0 && firstLetter) {
+    // Position at start of first letter
+    targetRect = firstLetter.getBoundingClientRect();
+    useRightEdge = false;
+  } else if (inputLen > 0 && inputLen <= letters.length) {
+    const targetLetter = letters[inputLen - 1];
+    if (targetLetter) {
+      // Position after the last typed letter
+      targetRect = targetLetter.getBoundingClientRect();
+      useRightEdge = true;
+    }
+  } else if (letters.length > 0) {
+    // Position after last letter (for extra chars)
+    const lastLetter = letters[letters.length - 1];
+    if (lastLetter) {
+      targetRect = lastLetter.getBoundingClientRect();
+      useRightEdge = true;
+    }
+  }
+
+  if (targetRect) {
+    const left = useRightEdge
+      ? targetRect.right - wrapperRect.left
+      : targetRect.left - wrapperRect.left;
+    const top = targetRect.top - wrapperRect.top;
+
+    caret.style.left = `${left}px`;
+    caret.style.top = `${top}px`;
+  }
+}
+
+function updateStats(): void {
+  if (!pvpTest.startTime) {
+    return;
+  }
+
+  const elapsed = (Date.now() - pvpTest.startTime) / 1000 / 60; // minutes
+  const wpm = elapsed > 0 ? Math.round(pvpTest.correctChars / 5 / elapsed) : 0;
+  const accuracy =
+    pvpTest.totalChars > 0
+      ? Math.round((pvpTest.correctChars / pvpTest.totalChars) * 100)
+      : 100;
+
+  // Update local display
+  state.matchStats ??= {
+    yourWpm: 0,
+    yourAccuracy: 0,
+    yourProgress: 0,
+    opponentWpm: 0,
+    opponentAccuracy: 0,
+    opponentProgress: 0,
+  };
+  state.matchStats.yourWpm = wpm;
+  state.matchStats.yourAccuracy = accuracy;
+  state.matchStats.yourProgress = Math.round(
+    (pvpTest.currentWordIndex / pvpTest.words.length) * 100,
+  );
+
+  updateMatchDisplay();
+
+  // Send progress to opponent
+  PvPSocket.emit("pvp:progress", {
+    wpm,
+    accuracy,
+    progress: state.matchStats.yourProgress,
+  });
+}
+
+function finishPvPTest(): void {
+  pvpTest.isActive = false;
+
+  const input = document.querySelector<HTMLInputElement>("#pvpWordsInput");
+  if (input) {
+    input.removeEventListener("input", handlePvPInput);
+    input.removeEventListener("keydown", handlePvPKeydown);
+  }
+
+  // Send completion to server
+  PvPSocket.emit("pvp:complete", {
+    wpm: state.matchStats?.yourWpm ?? 0,
+    accuracy: state.matchStats?.yourAccuracy ?? 0,
+  });
 }
 
 function handleOpponentProgress(data: {
@@ -299,8 +864,8 @@ function handleMatchResult(data: {
 function updateMatchDisplay(): void {
   if (!state.matchStats) return;
 
-  const youSection = qs(".pagePvp .matchContent .playerStats.you");
-  const opponentSection = qs(".pagePvp .matchContent .playerStats.opponent");
+  const youSection = qs(".pagePvp .matchStats .playerCard.you");
+  const opponentSection = qs(".pagePvp .matchStats .playerCard.opponent");
 
   // Update your stats
   const yourWpmEl =
@@ -342,9 +907,15 @@ function updateMatchDisplay(): void {
     oppProgEl.textContent = `${Math.round(state.matchStats.opponentProgress)}%`;
   }
 
-  // Update opponent name
-  const opponentNameEl = qs(".pagePvp .opponentName");
+  // Update opponent name in VS section
+  const opponentNameEl = qs(".pagePvp .matchStats .vsSection .opponentName");
   opponentNameEl?.setText(state.opponentName ?? "Opponent");
+
+  // Also update opponent name in their card
+  const oppCardName = qs(
+    ".pagePvp .matchStats .playerCard.opponent .playerName",
+  );
+  oppCardName?.setText(state.opponentName ?? "Opponent");
 }
 
 function updateResultDisplay(): void {
@@ -473,6 +1044,7 @@ function resetState(): void {
   state.matchStats = null;
   state.result = null;
   state.inQueue = false;
+  state.countdown = null;
 }
 
 function setupSocketListeners(): void {
@@ -526,9 +1098,21 @@ onDOMReady(() => {
     void leaveQueue();
   });
 
+  // Dev: Test match button (simulates finding a match)
+  qs(".pagePvp .testMatch")?.on("click", () => {
+    console.log("DEV: Test match clicked - simulating match found");
+    handleMatchFound({ opponent: "TestBot", matchId: "test-match-123" });
+  });
+
   // Forfeit button
   qs(".pagePvp .forfeit")?.on("click", () => {
     void forfeit();
+  });
+
+  // Dev: Start test button
+  qs(".pagePvp .startTest")?.on("click", () => {
+    console.log("DEV: Manual start test clicked");
+    handleGameStart();
   });
 
   // Result actions
@@ -561,11 +1145,13 @@ export const page = new Page({
     const joinBtn = qs(".pagePvp .joinQueue");
     const leaveBtn = qs(".pagePvp .leaveQueue");
     const forfeitBtn = qs(".pagePvp .forfeit");
+    const testMatchBtn = qs(".pagePvp .testMatch");
 
     console.log("Attaching handlers, buttons found:", {
       joinBtn: !!joinBtn,
       leaveBtn: !!leaveBtn,
       forfeitBtn: !!forfeitBtn,
+      testMatchBtn: !!testMatchBtn,
     });
 
     // Attach handlers
@@ -579,9 +1165,22 @@ export const page = new Page({
       void leaveQueue();
     });
 
+    // Dev: Test match button
+    testMatchBtn?.on("click", () => {
+      console.log("DEV: Test match clicked - simulating match found");
+      handleMatchFound({ opponent: "TestBot", matchId: "test-match-123" });
+    });
+
     forfeitBtn?.on("click", () => {
       console.log("Forfeit button clicked!");
       void forfeit();
+    });
+
+    // Dev: Start test button
+    const startTestBtn = qs(".pagePvp .startTest");
+    startTestBtn?.on("click", () => {
+      console.log("DEV: Manual start test clicked");
+      handleGameStart();
     });
 
     // Initialize Socket.IO connection
@@ -596,6 +1195,14 @@ export const page = new Page({
     updateQueueView();
   },
   afterHide: async (): Promise<void> => {
+    // Move typing test back to test page
+    const typingTest = qs("#typingTest");
+    const testPage = qs(".pageTest");
+
+    if (typingTest && testPage) {
+      testPage.native.appendChild(typingTest.native);
+    }
+
     // Disconnect Socket.IO
     PvPSocket.disconnect();
 
