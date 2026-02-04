@@ -48,10 +48,10 @@ export function stopQueueMatchLoop(): void {
  */
 export function setupQueueHandlers(socket: Socket): void {
   /**
-   * JOIN_QUEUE event
+   * pvp:join_queue event
    * Player joins the matchmaking queue
    */
-  socket.on("JOIN_QUEUE", async () => {
+  socket.on("pvp:join_queue", async () => {
     try {
       const userId = socket.data.userId as string;
       const username = socket.data.username as string;
@@ -78,9 +78,15 @@ export function setupQueueHandlers(socket: Socket): void {
       await socket.join(`user:${userId}`);
       await socket.join("queue_room"); // For broadcasts
 
+      // Notify player they joined queue
+      socket.emit("pvp:queue_joined", {
+        queueSize,
+        message: "Joined queue",
+      });
+
       // Notify all players in queue of updated size
       const io = getSocket();
-      io.to("queue_room").emit("QUEUE_UPDATED", {
+      io.to("queue_room").emit("pvp:queue_status", {
         queueSize,
       });
 
@@ -92,10 +98,10 @@ export function setupQueueHandlers(socket: Socket): void {
   });
 
   /**
-   * LEAVE_QUEUE event
+   * pvp:leave_queue event
    * Player leaves the matchmaking queue
    */
-  socket.on("LEAVE_QUEUE", async () => {
+  socket.on("pvp:leave_queue", async () => {
     try {
       const userId = socket.data.userId as string;
       if (!userId) return;
@@ -108,9 +114,14 @@ export function setupQueueHandlers(socket: Socket): void {
       await socket.leave(`user:${userId}`);
       await socket.leave("queue_room");
 
+      // Notify player they left queue
+      socket.emit("pvp:queue_left", {
+        message: "Left queue",
+      });
+
       // Notify remaining players
       const io = getSocket();
-      io.to("queue_room").emit("QUEUE_UPDATED", {
+      io.to("queue_room").emit("pvp:queue_status", {
         queueSize: PvPQueue.getQueueSize(),
       });
 

@@ -19,6 +19,7 @@ import { createIndicies as leaderboardDbSetup } from "./dal/leaderboards";
 import { createIndicies as blocklistDbSetup } from "./dal/blocklist";
 import { createIndicies as connectionsDbSetup } from "./dal/connections";
 import { getErrorMessage } from "./utils/error";
+import { initializeSocket } from "./init/socket";
 
 async function bootServer(port: number): Promise<Server> {
   try {
@@ -89,9 +90,14 @@ async function bootServer(port: number): Promise<Server> {
     return process.exit(1);
   }
 
-  return app.listen(port, () => {
+  const httpServer = app.listen(port, () => {
     Logger.success(`API server listening on port ${port}`);
   });
+
+  Logger.info("Initializing Socket.IO...");
+  initializeSocket(httpServer);
+
+  return httpServer;
 }
 
 const PORT = parseInt(process.env["PORT"] ?? "5005", 10);

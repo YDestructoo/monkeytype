@@ -40,10 +40,8 @@ const eventHandlers: Map<
 const getBackendUrl = (): string => {
   // In production, this should be the actual backend URL
   // For development, use localhost with backend port
-  const url = process.env["VITE_BACKEND_URL"];
-  return url !== null && url !== undefined && url.length > 0
-    ? url
-    : "http://localhost:5005";
+  const url = import.meta.env["VITE_BACKEND_URL"] as string | undefined;
+  return url !== undefined && url.length > 0 ? url : "http://localhost:5005";
 };
 
 export function connect(): void {
@@ -160,22 +158,27 @@ export function emit(event: string, data?: unknown): void {
     console.error("Cannot emit event: socket not connected");
     return;
   }
+  console.log(`Emitting event: ${event}`, data);
   socket.emit(event, data);
 }
 
 // PvP-specific actions
 export async function joinQueue(): Promise<void> {
+  console.log("PvPSocket.joinQueue called");
   return new Promise((resolve, reject) => {
     if (!socket?.connected) {
+      console.error("Socket not connected in joinQueue");
       reject(new Error("Socket not connected"));
       return;
     }
 
+    console.log("Emitting pvp:join_queue");
     emit("pvp:join_queue");
 
     // Wait for confirmation
     const timeout = setTimeout(() => {
-      reject(new Error("Join queue timeout"));
+      console.error("Join queue timeout - no response from server");
+      reject(new Error("Join queue timeout - server did not respond"));
     }, 5000);
 
     const handler = (): void => {

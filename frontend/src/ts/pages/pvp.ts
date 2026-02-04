@@ -116,25 +116,39 @@ function updateRankingDisplay(): void {
 }
 
 async function joinQueue(): Promise<void> {
+  console.log("joinQueue called");
+
   if (!isAuthenticated()) {
+    console.error("Not authenticated");
     Notifications.add("Please sign in to play PvP", 0);
     return;
   }
 
-  if (state.loading || state.inQueue) return;
+  if (state.loading || state.inQueue) {
+    console.log("Already loading or in queue", {
+      loading: state.loading,
+      inQueue: state.inQueue,
+    });
+    return;
+  }
 
   state.loading = true;
   showLoading(true);
 
   try {
+    console.log("Calling PvPSocket.joinQueue()");
     // Join queue via Socket.IO
     await PvPSocket.joinQueue();
+    console.log("Successfully joined queue");
     state.inQueue = true;
     updateQueueView();
     Notifications.add("Joined queue. Searching for opponent...", 1);
   } catch (error) {
     console.error("Failed to join queue:", error);
-    Notifications.add("Failed to join queue", -1);
+    Notifications.add(
+      `Failed to join queue: ${error instanceof Error ? error.message : "Unknown error"}`,
+      -1,
+    );
   } finally {
     state.loading = false;
     showLoading(false);
@@ -298,12 +312,15 @@ function updateMatchDisplay(): void {
     '[data-stat="progress"]',
   );
 
-  if (yourWpmEl)
+  if (yourWpmEl) {
     yourWpmEl.textContent = Math.round(state.matchStats.yourWpm).toString();
-  if (yourAccEl)
+  }
+  if (yourAccEl) {
     yourAccEl.textContent = `${Math.round(state.matchStats.yourAccuracy)}%`;
-  if (yourProgEl)
+  }
+  if (yourProgEl) {
     yourProgEl.textContent = `${Math.round(state.matchStats.yourProgress)}%`;
+  }
 
   // Update opponent stats
   const oppWpmEl =
@@ -315,12 +332,15 @@ function updateMatchDisplay(): void {
     '[data-stat="progress"]',
   );
 
-  if (oppWpmEl)
+  if (oppWpmEl) {
     oppWpmEl.textContent = Math.round(state.matchStats.opponentWpm).toString();
-  if (oppAccEl)
+  }
+  if (oppAccEl) {
     oppAccEl.textContent = `${Math.round(state.matchStats.opponentAccuracy)}%`;
-  if (oppProgEl)
+  }
+  if (oppProgEl) {
     oppProgEl.textContent = `${Math.round(state.matchStats.opponentProgress)}%`;
+  }
 
   // Update opponent name
   const opponentNameEl = qs(".pagePvp .opponentName");
@@ -366,9 +386,12 @@ function updateResultDisplay(): void {
     '[data-stat="eloChange"]',
   );
 
-  if (yourWpmEl) yourWpmEl.textContent = state.result.yourWpm.toFixed(2);
-  if (yourAccEl)
+  if (yourWpmEl) {
+    yourWpmEl.textContent = state.result.yourWpm.toFixed(2);
+  }
+  if (yourAccEl) {
     yourAccEl.textContent = `${state.result.yourAccuracy.toFixed(2)}%`;
+  }
 
   const yourEloChange = state.result.yourEloChange;
   if (yourEloEl) {
@@ -388,9 +411,12 @@ function updateResultDisplay(): void {
     '[data-stat="eloChange"]',
   );
 
-  if (oppWpmEl) oppWpmEl.textContent = state.result.opponentWpm.toFixed(2);
-  if (oppAccEl)
+  if (oppWpmEl) {
+    oppWpmEl.textContent = state.result.opponentWpm.toFixed(2);
+  }
+  if (oppAccEl) {
     oppAccEl.textContent = `${state.result.opponentAccuracy.toFixed(2)}%`;
+  }
 
   const oppEloChange = state.result.opponentEloChange;
   if (oppEloEl) {
@@ -480,16 +506,23 @@ function setupSocketListeners(): void {
 
 // Event handlers
 onDOMReady(() => {
+  console.log("PvP page: DOM ready, attaching event handlers");
+
   // Save skeleton
   Skeleton.save("pagePvp");
 
   // Join queue button
-  qs(".pagePvp .joinQueue")?.on("click", () => {
+  const joinBtn = qs(".pagePvp .joinQueue");
+  console.log("Join queue button found:", joinBtn);
+
+  joinBtn?.on("click", () => {
+    console.log("Join queue button clicked!");
     void joinQueue();
   });
 
   // Leave queue button
   qs(".pagePvp .leaveQueue")?.on("click", () => {
+    console.log("Leave queue button clicked!");
     void leaveQueue();
   });
 
@@ -521,7 +554,35 @@ export const page = new Page({
   element: qsr(".page.pagePvp"),
   path: "/pvp",
   beforeShow: async (): Promise<void> => {
+    console.log("PvP page beforeShow");
     Skeleton.append("pagePvp", "main");
+
+    // Attach event handlers (do this after skeleton is appended)
+    const joinBtn = qs(".pagePvp .joinQueue");
+    const leaveBtn = qs(".pagePvp .leaveQueue");
+    const forfeitBtn = qs(".pagePvp .forfeit");
+
+    console.log("Attaching handlers, buttons found:", {
+      joinBtn: !!joinBtn,
+      leaveBtn: !!leaveBtn,
+      forfeitBtn: !!forfeitBtn,
+    });
+
+    // Attach handlers
+    joinBtn?.on("click", () => {
+      console.log("Join queue button clicked!");
+      void joinQueue();
+    });
+
+    leaveBtn?.on("click", () => {
+      console.log("Leave queue button clicked!");
+      void leaveQueue();
+    });
+
+    forfeitBtn?.on("click", () => {
+      console.log("Forfeit button clicked!");
+      void forfeit();
+    });
 
     // Initialize Socket.IO connection
     PvPSocket.connect();
