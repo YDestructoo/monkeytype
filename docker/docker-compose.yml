@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   monkeytype-frontend:
     container_name: monkeytype-frontend
@@ -42,10 +40,10 @@ services:
       - EMAIL_FROM=${EMAIL_FROM:-}
     volumes:
       #uncomment to enable the account system, check the SELF_HOSTING.md file
-      #- type: bind
-      #  source: ./serviceAccountKey.json
-      #  target: /app/backend/src/credentials/serviceAccountKey.json
-      #  read_only: true
+      - type: bind
+        source: ./serviceAccountKey.json
+        target: /app/backend/src/credentials/serviceAccountKey.json
+        read_only: true
       - type: bind
         source: ./backend-configuration.json
         target: /app/backend/dist/backend-configuration.json

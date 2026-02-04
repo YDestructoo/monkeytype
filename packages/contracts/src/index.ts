@@ -13,6 +13,7 @@ import { usersContract } from "./users";
 import { quotesContract } from "./quotes";
 import { webhooksContract } from "./webhooks";
 import { connectionsContract } from "./connections";
+import { pvpContract } from "./pvp";
 
 const c = initContract();
 
@@ -31,6 +32,7 @@ export const contract = c.router({
   quotes: quotesContract,
   webhooks: webhooksContract,
   connections: connectionsContract,
+  pvp: pvpContract,
 });
 
 /**

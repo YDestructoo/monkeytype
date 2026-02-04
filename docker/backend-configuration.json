@@ -4,13 +4,13 @@
       "savingEnabled": true
     },
     "users": {
-      "signUp": false,
+      "signUp": true,
       "profiles": {
-        "enabled": false
+        "enabled": true
       }
     },
     "dailyLeaderboards": {
-      "enabled": false
+      "enabled": true
     },
     "leaderboards": {
       "minTimeTyping": 0

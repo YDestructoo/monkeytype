@@ -1,0 +1,217 @@
+<div class="page pagePvp hidden" id="pagePvp">
+  <div class="content">
+    <!-- Queue Section -->
+    <div class="queueSection">
+      <div class="bigtitle">
+        <div class="text">PvP Queue</div>
+        <div class="subtext">
+          <div class="text">Compete against other players in real-time</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="queueStatus">
+        <div class="yourRanking needAuth">
+          <div class="label">Your Ranking</div>
+          <div class="stats">
+            <div class="stat">
+              <div class="label">ELO</div>
+              <div class="value" data-stat="elo">-</div>
+            </div>
+            <div class="stat">
+              <div class="label">Wins</div>
+              <div class="value" data-stat="wins">-</div>
+            </div>
+            <div class="stat">
+              <div class="label">Losses</div>
+              <div class="value" data-stat="losses">-</div>
+            </div>
+            <div class="stat">
+              <div class="label">Win Rate</div>
+              <div class="value" data-stat="winrate">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="queueControls">
+          <button class="button joinQueue" data-action="joinQueue">
+            <i class="fas fa-play"></i>
+            Join Queue
+          </button>
+          <button class="button leaveQueue hidden" data-action="leaveQueue">
+            <i class="fas fa-times"></i>
+            Leave Queue
+          </button>
+          <div class="queueInfo hidden">
+            <div class="queueSize">
+              <i class="fas fa-users"></i>
+              <span>
+                Players in queue:
+                <span data-value="queueSize">0</span>
+              </span>
+            </div>
+            <div class="searching">
+              <i class="fas fa-circle-notch fa-spin"></i>
+              <span>Searching for opponent...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Match Section -->
+    <div class="matchSection hidden">
+      <div class="bigtitle">
+        <div class="text">Live Match</div>
+        <div class="subtext">
+          <div class="text">
+            <span>vs</span>
+            <span class="opponentName">-</span>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="matchContent">
+        <div class="playerStats you">
+          <div class="playerName">You</div>
+          <div class="stats">
+            <div class="stat">
+              <div class="label">WPM</div>
+              <div class="value" data-stat="wpm">0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Accuracy</div>
+              <div class="value" data-stat="accuracy">0%</div>
+            </div>
+            <div class="stat">
+              <div class="label">Progress</div>
+              <div class="value" data-stat="progress">0%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vsIndicator">
+          <div class="vs">VS</div>
+          <div class="timer">
+            <i class="fas fa-clock"></i>
+            <span data-value="timer">0:00</span>
+          </div>
+        </div>
+
+        <div class="playerStats opponent">
+          <div class="playerName opponentName">Opponent</div>
+          <div class="stats">
+            <div class="stat">
+              <div class="label">WPM</div>
+              <div class="value" data-stat="wpm">0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Accuracy</div>
+              <div class="value" data-stat="accuracy">0%</div>
+            </div>
+            <div class="stat">
+              <div class="label">Progress</div>
+              <div class="value" data-stat="progress">0%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testArea">
+        <!-- Test UI will be injected here -->
+      </div>
+
+      <div class="matchActions">
+        <button class="button forfeit" data-action="forfeit">
+          <i class="fas fa-flag"></i>
+          Forfeit Match
+        </button>
+      </div>
+    </div>
+
+    <!-- Result Section -->
+    <div class="resultSection hidden">
+      <div class="bigtitle">
+        <div class="text matchResult">-</div>
+        <div class="subtext">
+          <div class="text resultSubtext">-</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="resultContent">
+        <div class="finalStats">
+          <div class="playerResult you">
+            <div class="playerName">You</div>
+            <div class="stats">
+              <div class="stat">
+                <div class="label">WPM</div>
+                <div class="value" data-stat="wpm">-</div>
+              </div>
+              <div class="stat">
+                <div class="label">Accuracy</div>
+                <div class="value" data-stat="accuracy">-</div>
+              </div>
+              <div class="stat">
+                <div class="label">ELO Change</div>
+                <div class="value eloChange" data-stat="eloChange">-</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="playerResult opponent">
+            <div class="playerName opponentName">Opponent</div>
+            <div class="stats">
+              <div class="stat">
+                <div class="label">WPM</div>
+                <div class="value" data-stat="wpm">-</div>
+              </div>
+              <div class="stat">
+                <div class="label">Accuracy</div>
+                <div class="value" data-stat="accuracy">-</div>
+              </div>
+              <div class="stat">
+                <div class="label">ELO Change</div>
+                <div class="value eloChange" data-stat="eloChange">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="resultActions">
+          <button class="button playAgain" data-action="playAgain">
+            <i class="fas fa-redo"></i>
+            Play Again
+          </button>
+          <button class="button viewLeaderboard" data-action="viewLeaderboard">
+            <i class="fas fa-trophy"></i>
+            View Leaderboard
+          </button>
+          <button class="button backToQueue" data-action="backToQueue">
+            <i class="fas fa-arrow-left"></i>
+            Back to Queue
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="connectionStatus hidden">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>Connection lost. Reconnecting...</span>
+    </div>
+
+    <!-- Error Display -->
+    <div class="error hidden">
+      <i class="fas fa-times"></i>
+      <p class="errorMessage">Something went wrong</p>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading hidden">
+      <i class="fas fa-circle-notch fa-spin"></i>
+      <p>Loading PvP...</p>
+    </div>
+  </div>
+</div>

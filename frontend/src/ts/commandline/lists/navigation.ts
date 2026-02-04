@@ -23,6 +23,15 @@ const commands: Command[] = [
     },
   },
   {
+    id: "viewPvp",
+    display: "View PvP",
+    alias: "navigate go to pvp battle multiplayer versus",
+    icon: "fa-users",
+    exec: (): void => {
+      void navigate("/pvp");
+    },
+  },
+  {
     id: "viewAbout",
     display: "View About Page",
     alias: "navigate go to",

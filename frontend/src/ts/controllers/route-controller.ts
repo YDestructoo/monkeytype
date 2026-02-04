@@ -152,6 +152,12 @@ const routes: Route[] = [
       await PageController.change("friends", options);
     },
   },
+  {
+    path: "/pvp",
+    load: async (_params, options) => {
+      await PageController.change("pvp", options);
+    },
+  },
 ];
 
 export async function navigate(
